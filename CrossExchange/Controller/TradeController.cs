@@ -22,8 +22,7 @@ namespace CrossExchange.Controller
             _tradeRepository = tradeRepository;
             _portfolioRepository = portfolioRepository;
         }
-
-
+        
         [HttpGet("{portfolioid}")]
         public async Task<IActionResult> GetAllTradings([FromRoute]int portFolioid)
         {
@@ -52,8 +51,43 @@ namespace CrossExchange.Controller
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]TradeModel model)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (model.Action == "SELL")
+            {
+                var shares = _shareRepository.Query().Where(x => x.Symbol.Equals(model.Symbol)).ToList();
+                var tradeQuantity = _tradeRepository.Query().Where(x => x.Symbol.Equals(model.Symbol)).GroupBy(x => x.Action).ToList();
+                var result = tradeQuantity.Select(y => new
+                {
+                    Action = y.Key,
+                    NoOfShares = y.Sum(x => x.NoOfShares)
+                });
+                var BuyQuantity = result.FirstOrDefault(x => x.Action == "BUY");
+                var SaleQuantity = result.FirstOrDefault(x => x.Action == "SELL");
+                if (Convert.ToInt32(BuyQuantity) < Convert.ToInt32(SaleQuantity))
+                {
+                    ModelState.AddModelError("", model.Symbol + "Share not available");
+                    return BadRequest(ModelState);
+                }
+                else if (Convert.ToInt32(BuyQuantity) - Convert.ToInt32(SaleQuantity) < model.NoOfShares)
+                {
+                    ModelState.AddModelError("", model.Symbol + "Requested Share not available");
+                    return BadRequest(ModelState);
+                }
+            }
+            var trade = new Trade()
+            {
+                Action = model.Action,
+                NoOfShares = model.NoOfShares,
+                Symbol = model.Symbol,
+                PortfolioId = model.PortfolioId
+            };
+            await _tradeRepository.InsertAsync(trade);
             return Created("Trade", model);
         }
-        
+
     }
 }

@@ -1,11 +1,13 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace CrossExchange.Controller
 {
     [Route("api/Share")]
+    [Authorize]
     public class ShareController : ControllerBase
     {
         public IShareRepository _shareRepository { get; set; }

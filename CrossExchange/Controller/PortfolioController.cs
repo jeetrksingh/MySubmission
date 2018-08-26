@@ -1,10 +1,12 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CrossExchange.Controller
 {
     [Route("api/Portfolio")]
+    [Authorize]
     public class PortfolioController : ControllerBase
     {
         private IPortfolioRepository _portfolioRepository { get; set; }
